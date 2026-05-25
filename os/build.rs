@@ -1,0 +1,49 @@
+use std::io::{Result, Write};
+use std::fs::{File, read_dir};
+
+fn main() {
+    println!("cargo:rerun-if-changed=../user/src/");
+    println!("cargo:rerun-if-changed={}", TARGET_PATH);
+    insert_app_data().unwrap();
+}
+
+static TARGET_PATH: &str = "../user/target/riscv64gc-unknown-none-elf/release/";
+
+fn insert_app_data() -> Result<()> {
+    let mut f = File::create("src/link_app.S").unwrap();
+    let mut apps: Vec<_> = read_dir("../user/src/bin")
+        .unwrap()
+        .into_iter()
+        .map(|dir_entry| {
+            let mut name = dir_entry.unwrap().file_name().into_string().unwrap();
+            let dot = name.find('.').unwrap();
+            name.drain(dot..);
+            name
+        })
+        .collect();
+    apps.sort();
+
+    // 这里修复：app_{i}_start （正确带下划线）
+    writeln!(f, r#"
+    .align 3
+    .section .data
+    .global _num_app
+_num_app:
+    .quad {}"#, apps.len())?;
+
+    for i in 0..apps.len() {
+        writeln!(f, r#"    .quad app_{i}_start"#)?;
+    }
+    writeln!(f, r#"    .quad app_{}_end"#, apps.len() - 1)?;
+
+    for (idx, app) in apps.iter().enumerate() {
+        writeln!(f, r#"
+    .section .data
+    .global app_{0}_start
+    .global app_{0}_end
+app_{0}_start:
+    .incbin "{1}{2}.bin"
+app_{0}_end:"#, idx, TARGET_PATH, app)?;
+    }
+    Ok(())
+}

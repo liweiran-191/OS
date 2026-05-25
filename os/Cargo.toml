@@ -1,0 +1,14 @@
+[package]
+name = "os"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+lazy_static = { version = "1.4.0", features = ["spin_no_std"] }	
+riscv = { git = "https://github.com/rcore-os/riscv", features = ["inline-asm"] }
+
+[profile.release]
+panic = "abort"
+
+[profile.dev]
+panic = "abort"
