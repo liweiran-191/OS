@@ -9,6 +9,7 @@ mod lang_items;
 use syscall::sys_write;
 use syscall::sys_exit;
 use crate::syscall::sys_yield;
+use crate::syscall::sys_get_time;
 
 fn clear_bss() {
     unsafe extern "C" {
@@ -45,3 +46,5 @@ pub fn exit(exit_code: i32) -> isize {
 }
 
 pub fn yield_() -> isize { sys_yield() }
+
+pub fn get_time() -> isize { sys_get_time() }
