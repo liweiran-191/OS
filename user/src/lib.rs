@@ -1,0 +1,37 @@
+#![no_std]
+#![feature(linkage)]
+
+#[macro_use]
+pub mod console;
+mod syscall;
+mod lang_items;
+
+use syscall::sys_write;
+use syscall::sys_exit;
+use crate::syscall::sys_yield;
+use crate::syscall::sys_get_time;
+
+#[no_mangle]
+#[link_section = ".text.entry"]
+pub extern "C" fn _start() -> ! {
+    exit(main());
+    panic!("unreachable after sys_exit!");
+}
+
+#[linkage = "weak"]
+#[no_mangle]
+fn main() -> i32 {
+    panic!("Cannot find main!");
+}
+
+pub fn write(fd: usize, buf: &[u8]) -> isize {
+    sys_write(fd, buf)
+}
+
+pub fn exit(exit_code: i32) -> isize {
+    sys_exit(exit_code)
+}
+
+pub fn yield_() -> isize { sys_yield() }
+
+pub fn get_time() -> isize { sys_get_time() }
