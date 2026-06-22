@@ -7,7 +7,7 @@ fn main() {
     insert_app_data().unwrap();
 }
 
-static TARGET_PATH: &str = "../user/target/riscv64gc-unknown-none-elf/release/";
+static TARGET_PATH: &str = "../user/target/riscv64gc-unknown-none-elf/debug/";
 
 fn insert_app_data() -> Result<()> {
     let mut f = File::create("src/link_app.S").unwrap();
@@ -36,6 +36,13 @@ _num_app:
         writeln!(f, r#"    .quad app_{}_start"#, i)?;
     }
     writeln!(f, r#"    .quad app_{}_end"#, apps.len() - 1)?;
+
+    writeln!(f, r#"
+    .global _app_names
+_app_names:"#)?;
+    for app in apps.iter() {
+        writeln!(f, r#"    .string "{}""#, app)?;
+    }
 
     for (idx, app) in apps.iter().enumerate() {
         println!("app_{}: {}", idx, app);
